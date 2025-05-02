@@ -221,6 +221,11 @@ function App() {
       return;
     }
 
+    if (!userNameRef.current) {
+      toast.error('Please refresh the page');
+      return;
+    }
+
     if (message.includes('@')) {
       const userNameIsTagged = message.split('@')[ 1 ].split(' ')[ 0 ];
       if (userNameIsTagged) {
@@ -268,7 +273,7 @@ function App() {
     return (
       <div className="w-full h-screen flex justify-center items-center">
         <div className="flex flex-col w-5/6 sm:w-1/2 md:w-1/2 lg:w-1/4 p-4 border rounded-md shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Enter your username</h2>
+          <h2 className="text-lg font-semibold mb-2">Enter a username</h2>
           <input
             type="text"
             value={inputUsername}
@@ -292,9 +297,10 @@ function App() {
   return (
     <>
       <div className="w-full h-screen flex justify-center items-center">
-        <div className="w-full sm:w-full md:w-1/2 xl:w-1/3 h-full flex flex-col justify-end overflow-hidden">
-          <div className="header flex justify-between items-center p-2 border rounded-md">
-            <h1 className="text-lg font-semibold">PPLzZ</h1>
+        <div className="chats-container w-full md:w-2/3 xl:w-1/3 h-full flex flex-col justify-end p-2 overflow-hidden border rounded-md">
+          {/* Header */}
+          <div className="Header flex justify-between items-center p-2 border rounded-md">
+            <h1 className="text-lg font-semibold font-logo">PeoplZz</h1>
             <div className="flex flex-col items-center">
               <p className="text-xs text-gray-400">@Username</p>
               <p className="text-sm font-semibold">{userNameRef.current}</p>
@@ -311,20 +317,25 @@ function App() {
             </div>
           </div>
 
+          {/* Chats window */}
           <div className="chats-window overflow-y-scroll p-2 h-full text-xl">
             {chats?.length > 0 && (
-              <ul className="flex flex-col">
+              <ul className="flex flex-col gap-1">
                 {chats.map((chat, index) => (
                   <li key={index} className="mb-2 text-sm">
                     {chat.from === userNameRef.current ? (
                       <div className="flex flex-col items-end">
-                        <h1 className="text-sm font-semibold text-blue-600">You</h1>
-                        <p className={`text-sm rounded-md p-2 ${chat.isPrivate ? 'bg-amber-200' : 'bg-teal-200'}`}>{chat.message}</p>
+                        <h1 className="font-semibold text-blue-600">You</h1>
+                        <p className={`rounded-md p-2 ${chat.isPrivate ? 'bg-amber-200' : 'bg-teal-200'} max-w-4/5`}>{chat.message}</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-start">
-                        <h1 className="text-sm font-semibold text-blue-600">{chat.from}</h1>
-                        <p className={`text-sm rounded-md p-2 ${chat.isPrivate ? 'bg-amber-200' : 'bg-indigo-200'}`}>{chat.message}</p>
+                        {chat.isPrivate ? (
+                          <h1 className="font-semibold text-blue-600">{chat.from} (Private)</h1> || <h1 className="font-semibold text-blue-600">You</h1>
+                        ) : (
+                          <h1 className="font-semibold text-indigo-600">{chat.from}</h1>
+                        )}
+                        <p className={`rounded-md p-2 ${chat.isPrivate ? 'bg-amber-200' : 'bg-indigo-200'} max-w-4/5`}>{chat.message}</p>
                       </div>
                     )}
                   </li>
@@ -336,7 +347,7 @@ function App() {
           </div>
 
           {renderAvailableUsers && (
-            <ul className="user-list flex flex-col max-h-[5rem] overflow-y-scroll z-[99] mb-1 p-2 rounded-2xl bg-gray-200"
+            <ul className="user-list flex flex-col max-h-[5rem] overflow-y-scroll z-[99] mb-1 p-2 rounded-2xl bg-white"
             >
               {userList.map((user, index) => (
                 <li key={index} className="mb-2 text-sm">
@@ -351,17 +362,18 @@ function App() {
             </ul>
           )}
 
-          <div className="flex justify-center items-center gap-4 p-2 border rounded-md">
+          {/* Input field */}
+          <div className="flex justify-center items-center gap-2 p-2">
             <input
               type="text"
               value={message}
               autoFocus
               onChange={(e) => setMessage(e.target.value)}
-              className="w-full outline-none border border-gray-500 p-1 rounded-xl pl-3"
+              className="w-full outline-none bg-white p-2 rounded-xl pl-3"
               placeholder="Type your message..."
               onKeyDown={(e) => e.key === 'Enter' && handleMessageSend()}
             />
-            <button className="cursor-pointer" onClick={handleMessageSend}><SendHorizontal /></button>
+            <button className="lg:cursor-pointer lg:hover:bg-blue-300 duration-300 p-2 rounded-full" onClick={handleMessageSend}><SendHorizontal /></button>
           </div>
         </div>
       </div>
