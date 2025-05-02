@@ -138,6 +138,7 @@ function App() {
 
   // Manual username check for new users
   const checkUserName = async () => {
+    if (!isValidName()) return;
     if (!inputUsername.trim()) {
       toast.error('Please enter a username');
       return;
@@ -197,6 +198,22 @@ function App() {
     }
   }, [ chats ]);
 
+  const isValidName = () => {
+    if (inputUsername.length < 3) {
+      toast.error('Username must be at least 3 characters long');
+      return false;
+    }
+    if (inputUsername.length > 10) {
+      toast.error('Username must be at most 10 characters long');
+      return false;
+    }
+    if (!inputUsername.match(/^[a-zA-Z0-9]*$/)) {
+      toast.error('Username can only contain letters and numbers');
+      return false;
+    }
+    return true;
+  }
+
   const handleMessageSend = () => {
     if (message.trim() === '') return;
     if (message.length > 2000) {
@@ -250,7 +267,7 @@ function App() {
   if (!userNameRef.current) {
     return (
       <div className="w-full h-screen flex justify-center items-center">
-        <div className="flex flex-col w-1/4 p-4 border rounded-md shadow-md">
+        <div className="flex flex-col w-5/6 sm:w-1/2 md:w-1/2 lg:w-1/4 p-4 border rounded-md shadow-md">
           <h2 className="text-lg font-semibold mb-2">Enter your username</h2>
           <input
             type="text"
