@@ -1,5 +1,8 @@
 import { io } from "socket.io-client";
+import { getUrl } from "./_getUrl";
 
-const socket = io("http://localhost:8080");
+const _$BkURL = getUrl();
+
+const socket = io(`${_$BkURL}`);
 
 export default socket;

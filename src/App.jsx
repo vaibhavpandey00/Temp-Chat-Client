@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { SendHorizontal, LogOut } from 'lucide-react';
 import socket from './clientSocket';
 import { toast } from 'react-toastify';
+import { getUrl } from './_getUrl';
+
+const _BKuRl = getUrl();
 
 function App() {
-  const [ chats, setChats ] = useState([])
+  const [ chats, setChats ] = useState([]);
   const [ message, setMessage ] = useState('');
   const [ inputUsername, setInputUsername ] = useState('');
   const [ userCount, setUserCount ] = useState(0);
@@ -18,20 +21,29 @@ function App() {
     const savedUsername = localStorage.getItem('username');
 
     if (savedUsername) {
-      // If username exists in localStorage, verify if it's available
       checkStoredUsername(savedUsername);
     } else {
-      // If no username in localStorage, allow manual entry
       setLoading(false);
     }
 
     // Socket event listeners
     socket.on("groupMessage", (data) => {
+      // console.log("Group Message: ", data);
+
       setChats((prev) => [ ...prev, data ]);
     });
 
     socket.on("privateMessage", (data) => {
-      setChats((prev) => [ ...prev, data ]);
+      // console.log("Private Message: ", data);
+
+      setChats((prev) => {
+        // Check if this message ID already exists in the chat array
+        const messageExists = prev.some(msg => msg.id === data.id);
+        if (messageExists) {
+          return prev;
+        }
+        return [ ...prev, data ];
+      });
     });
 
     socket.on('userCount', (count) => {
@@ -39,11 +51,9 @@ function App() {
     });
 
     socket.on('userList', (userList) => {
-      userList.map((user) => {
-        if (user !== userNameRef.current) {
-          setUserList((prev) => [ ...prev, user ]);
-        }
-      })
+      // Filter out the current user and set the list directly
+      const filteredList = userList.filter(user => user !== userNameRef.current);
+      setUserList(filteredList);
     })
 
     return () => {
@@ -53,7 +63,7 @@ function App() {
     };
   }, []);
 
-  // Add this useEffect to handle global keypress events
+  // useEffect to handle global keypress events
   useEffect(() => {
     // Function to handle keydown events
     const handleGlobalKeyPress = (e) => {
@@ -67,7 +77,6 @@ function App() {
 
       // If it's an alphanumeric key and not already in a text field
       if (isAlphaNumeric && !isInputActive && userNameRef.current) {
-        // Find your chat input element and focus it
         const chatInput = document.querySelector('input[placeholder="Type your message..."]');
         if (chatInput) {
           chatInput.focus();
@@ -78,7 +87,6 @@ function App() {
     // Add the event listener
     document.addEventListener('keydown', handleGlobalKeyPress);
 
-    // Remove event listener on cleanup
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyPress);
     };
@@ -102,7 +110,7 @@ function App() {
   // Function to check if stored username is still available
   const checkStoredUsername = async (username) => {
     try {
-      const response = await fetch('http://localhost:8080/checkUsername', {
+      const response = await fetch(`${_BKuRl}/checkUsername`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -137,7 +145,7 @@ function App() {
 
     try {
       setLoading(true); // Start loading state
-      const response = await fetch('http://localhost:8080/checkUsername', {
+      const response = await fetch(`${_BKuRl}/checkUsername`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -175,10 +183,10 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('username');
     userNameRef.current = null;
-    socket.emit("disconnect");
+    // socket.emit("disconnect");
     setChats([]);
     setUserList([]);
-    window.location.reload(); // Simple way to reset the app state
+    window.location.reload();
   };
 
   const chatEndRef = useRef(null);
@@ -191,7 +199,7 @@ function App() {
 
   const handleMessageSend = () => {
     if (message.trim() === '') return;
-    if (message.length > 2500) {
+    if (message.length > 2000) {
       toast.error('The message is too long');
       return;
     }
@@ -270,6 +278,10 @@ function App() {
         <div className="w-full sm:w-full md:w-1/2 xl:w-1/3 h-full flex flex-col justify-end overflow-hidden">
           <div className="header flex justify-between items-center p-2 border rounded-md">
             <h1 className="text-lg font-semibold">PPLzZ</h1>
+            <div className="flex flex-col items-center">
+              <p className="text-xs text-gray-400">@Username</p>
+              <p className="text-sm font-semibold">{userNameRef.current}</p>
+            </div>
             <div className="flex items-center gap-2">
               <p className="text-sm">Online: {userCount}</p>
               <button
@@ -290,12 +302,12 @@ function App() {
                     {chat.from === userNameRef.current ? (
                       <div className="flex flex-col items-end">
                         <h1 className="text-sm font-semibold text-blue-600">You</h1>
-                        <p className="text-sm rounded-md p-2 bg-blue-200">{chat.message}</p>
+                        <p className={`text-sm rounded-md p-2 ${chat.isPrivate ? 'bg-amber-200' : 'bg-teal-200'}`}>{chat.message}</p>
                       </div>
                     ) : (
                       <div className="flex flex-col items-start">
                         <h1 className="text-sm font-semibold text-blue-600">{chat.from}</h1>
-                        <p className="text-sm rounded-md p-2 bg-purple-200">{chat.message}</p>
+                        <p className={`text-sm rounded-md p-2 ${chat.isPrivate ? 'bg-amber-200' : 'bg-indigo-200'}`}>{chat.message}</p>
                       </div>
                     )}
                   </li>
