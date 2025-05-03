@@ -46,6 +46,14 @@ function App() {
       });
     });
 
+    socket.on('userJoined', (userId) => {
+      // console.log("User joined: ", userId);
+    });
+
+    socket.on('userLeft', (userId) => {
+      // console.log("User left: ", userId);
+    });
+
     socket.on('userCount', (count) => {
       setUserCount(count);
     });
@@ -54,7 +62,7 @@ function App() {
       // Filter out the current user and set the list directly
       const filteredList = userList.filter(user => user !== userNameRef.current);
       setUserList(filteredList);
-    })
+    });
 
     return () => {
       socket.off("groupMessage");
@@ -184,9 +192,9 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('username');
     userNameRef.current = null;
-    // socket.emit("disconnect");
     setChats([]);
     setUserList([]);
+    socket.disconnect();
     window.location.reload();
   };
 
@@ -261,34 +269,49 @@ function App() {
 
   // Show loading state
   if (loading) {
-    return (
-      <div className="w-full h-screen flex justify-center items-center">
-        <div className="text-lg">Loading...</div>
+    return <>
+      <div className="bg-gradient-to-bl from-[#ffe4e6]  to-[#ccfbf1] h-screen flex justify-center items-center">
+        <div class="loader"></div>
       </div>
-    );
+    </>
   }
 
   // Ask for username first
   if (!userNameRef.current) {
     return (
       <div className="w-full h-screen flex justify-center items-center">
-        <div className="flex flex-col w-5/6 sm:w-1/2 md:w-1/2 lg:w-1/4 p-4 border rounded-md shadow-md">
-          <h2 className="text-lg font-semibold mb-2">Enter a username</h2>
-          <input
-            type="text"
-            value={inputUsername}
-            onChange={(e) => setInputUsername(e.target.value)}
-            className="border p-2 rounded mb-3"
-            placeholder="Your name"
-            autoFocus
-            onKeyDown={(e) => e.key === 'Enter' && checkUserName()}
-          />
-          <button
-            onClick={checkUserName}
-            className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 cursor-pointer"
-          >
-            Join Chat
+
+        <div className="input__container">
+          <div className="shadow__input"></div>
+          <button className="input__button__shadow">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="#000000"
+              width="20px"
+              height="20px"
+            >
+              <path d="M0 0h24v24H0z" fill="none"></path>
+              <path
+                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+              ></path>
+            </svg>
           </button>
+          <div className="flex flex-col gap-1">
+            <input
+              type="text"
+              name="username"
+              className="input__search"
+              placeholder="Enter a username"
+              value={inputUsername}
+              onChange={(e) => setInputUsername(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && checkUserName()}
+              autoFocus
+              autoComplete='off'
+              required
+            />
+            <p className="text-sm">Press Enter To Join</p>
+          </div>
         </div>
       </div>
     );
@@ -363,7 +386,7 @@ function App() {
           )}
 
           {/* Input field */}
-          <div className="flex justify-center items-center gap-2 p-2">
+          <div className="flex justify-center items-center gap-2 p-2 position-absolute">
             <input
               type="text"
               value={message}
@@ -373,7 +396,9 @@ function App() {
               placeholder="Type your message..."
               onKeyDown={(e) => e.key === 'Enter' && handleMessageSend()}
             />
-            <button className="lg:cursor-pointer lg:hover:bg-blue-300 duration-300 p-2 rounded-full" onClick={handleMessageSend}><SendHorizontal /></button>
+            <button className="lg:cursor-pointer lg:hover:bg-blue-300 duration-300 p-2 rounded-full position-relative z-[99]" onClick={handleMessageSend}>
+              <SendHorizontal />
+            </button>
           </div>
         </div>
       </div>
